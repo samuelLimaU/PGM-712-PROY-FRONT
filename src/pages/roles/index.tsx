@@ -105,7 +105,6 @@ export default function RolesPage() {
         </ComponentCard>
       </div>
 
-      {/* 🔥 MODAL (RolForm ahora es modal) */}
       <RolForm
         isOpen={openModal}
         editingRol={editingRol}

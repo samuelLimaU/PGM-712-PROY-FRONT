@@ -1,50 +1,34 @@
 import { Rol } from "../types/Rol";
+import { http } from "./httpClient";
 
 const API_URL = "http://localhost:8080/roles";
 
-// GET ALL
 export const getRoles = async (): Promise<Rol[]> => {
-  const res = await fetch(API_URL);
+  const res = await http.get(API_URL);
   if (!res.ok) throw new Error("Error GET Roles");
   return await res.json();
 };
 
-// GET BY ID
 export const getRolById = async (id: number): Promise<Rol> => {
-  const res = await fetch(`${API_URL}/${id}`);
-  return res.json();
+  const res = await http.get(`${API_URL}/${id}`);
+  if (!res.ok) throw new Error("Error GET Rol");
+  return await res.json();
 };
 
-// CREATE
 export const createRol = async (rol: Rol): Promise<Rol> => {
-  const res = await fetch(API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(rol),
-  });
-  return res.json();
+  const res = await http.post(API_URL, rol);
+  if (!res.ok) throw new Error("Error POST Rol");
+  return await res.json();
 };
 
-// UPDATE
 export const updateRol = async (id: number, rol: Rol): Promise<Rol> => {
-  const res = await fetch(`${API_URL}/${id}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(rol),
-  });
-  return res.json();
+  const res = await http.put(`${API_URL}/${id}`, rol);
+  if (!res.ok) throw new Error("Error PUT Rol");
+  return await res.json();
 };
 
-// DELETE
 export const deleteRol = async (id: number): Promise<string> => {
-  const res = await fetch(`${API_URL}/${id}`, {
-    method: "DELETE",
-  });
-  return res.text();
-
-  
+  const res = await http.delete(`${API_URL}/${id}`);
+  if (!res.ok) throw new Error("Error DELETE Rol");
+  return await res.text();
 };

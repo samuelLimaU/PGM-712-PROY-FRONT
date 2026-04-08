@@ -1,4 +1,4 @@
-import PageMeta from "../../components/common/PageMeta";
+/*import PageMeta from "../../components/common/PageMeta";
 import AuthLayout from "./AuthPageLayout";
 import SignInForm from "../../components/auth/SignInForm";
 
@@ -12,6 +12,20 @@ export default function SignIn() {
       <AuthLayout>
         <SignInForm />
       </AuthLayout>
+    </>
+  );
+}
+*/
+
+// src/pages/AuthPages/SignIn.tsx
+import PageMeta from "../../components/common/PageMeta";
+import AuthPage from "./AuthPage";
+
+export default function SignIn() {
+  return (
+    <>
+      <PageMeta title="Sign In" description="Iniciar sesión" />
+      <AuthPage initialMode="signin" />
     </>
   );
 }
