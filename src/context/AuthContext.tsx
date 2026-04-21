@@ -1,9 +1,12 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 
 interface AuthUser {
+  id: number;
   token: string;
   email: string;
   nombre: string;
+  apellido: string;
+  telefono: string;
   roles: string[];
 }
 

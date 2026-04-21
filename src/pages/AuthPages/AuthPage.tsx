@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { EyeCloseIcon, EyeIcon } from "../../icons";
 import Label from "../../components/form/Label";
 import Input from "../../components/form/input/InputField";
@@ -23,6 +23,7 @@ export default function AuthPage({ initialMode = "signin" }: AuthPageProps) {
   const [isChecked, setIsChecked] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [searchParams] = useSearchParams();
 
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [registerForm, setRegisterForm] = useState({
@@ -49,7 +50,10 @@ export default function AuthPage({ initialMode = "signin" }: AuthPageProps) {
     try {
       const data = await loginService(loginForm.email, loginForm.password);
       login(data);
-      navigate("/");
+      
+      // Si hay un parámetro 'redirect', lo usamos. Si no, al dashboard.
+      const redirectUrl = searchParams.get("redirect") || "/dashboard";
+      navigate(redirectUrl);
     } catch {
       setError("Email o contraseña incorrectos");
     } finally {

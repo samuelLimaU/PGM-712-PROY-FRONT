@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Outlet } from "react-router";
+import { BrowserRouter as Router, Routes, Route, Outlet, Navigate } from "react-router";
 import SignIn from "./pages/AuthPages/SignIn";
 import SignUp from "./pages/AuthPages/SignUp";
 import NotFound from "./pages/OtherPage/NotFound";
@@ -20,12 +20,14 @@ import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
 import Usuarios from "./pages/usuarios";
 import Roles from "./pages/roles";
+import Pedidos from "./pages/pedidos";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import Producto from "./pages/productos";
 import { CarritoProvider } from "./pages/tienda/context/CarritoContext";
 import CatalogoPage from "./pages/tienda/";
 import CheckoutPage from "./pages/tienda/CheckoutPage";
+import Promocion from "./pages/promociones";
 
 export default function App() {
   return (
@@ -33,14 +35,18 @@ export default function App() {
       <Router>
         <ScrollToTop />
         <Routes>
+          {/* Redirección inicial */}
+          <Route path="/" element={<Navigate to="/tienda" replace />} />
 
           {/* PROTEGIDO */}
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
-              <Route index path="/" element={<Home />} />
+              <Route path="/dashboard" element={<Home />} />
               <Route path="/usuarios" element={<Usuarios />} />
               <Route path="/roles" element={<Roles />} />
               <Route path="/productos" element={<Producto />} />
+              <Route path="/promociones" element={<Promocion />} />
+              <Route path="/pedidos" element={<Pedidos />} />
               <Route path="/profile" element={<UserProfiles />} />
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/blank" element={<Blank />} />
@@ -65,7 +71,7 @@ export default function App() {
           <Route
             element={
               <CarritoProvider>
-                <Outlet />   {/* ← necesitas importar Outlet */}
+                <Outlet />
               </CarritoProvider>
             }
           >

@@ -11,6 +11,7 @@ import {
   updateProducto,
 } from "../../services/ProductoService";
 import { useSound } from "../../hooks/useSound";
+import { showSuccess, showError, showConfirm } from "../../utils/sweetAlert";
 
 export default function ProductoPage() {
   const [data, setData] = useState<Producto[]>([]);
@@ -24,8 +25,8 @@ export default function ProductoPage() {
       setLoading(true);
       const productos = await getProductos();
       setData(productos);
-    } catch (error) {
-      console.error("Error al cargar productos:", error);
+    } catch (error: any) {
+      showError("Error al cargar productos", error.message);
     } finally {
       setLoading(false);
     }
@@ -36,20 +37,36 @@ export default function ProductoPage() {
   }, []);
 
   const handleSave = async (formData: FormData) => {
-    if (editing) {
-      await updateProducto(editing.id!, formData);
-    } else {
-      await createProducto(formData);
+    try {
+      if (editing) {
+        await updateProducto(editing.id!, formData);
+        showSuccess("¡Actualizado!", "Producto actualizado correctamente");
+      } else {
+        await createProducto(formData);
+        showSuccess("¡Guardado!", "Nuevo producto creado con éxito");
+      }
+      await load();
+      setOpenModal(false);
+      setEditing(null);
+    } catch (error: any) {
+      showError("Error al procesar producto", error.message);
     }
-    await load();
-    setOpenModal(false);
-    setEditing(null);
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("¿Eliminar producto?")) return;
-    await deleteProducto(id);
-    load();
+    const isConfirmed = await showConfirm(
+      "¿Eliminar producto?",
+      "Esta acción eliminará el producto permanentemente del inventario."
+    );
+    if (!isConfirmed) return;
+
+    try {
+      await deleteProducto(id);
+      showSuccess("¡Eliminado!", "El producto ha sido removido.");
+      load();
+    } catch (error: any) {
+      showError("Error al eliminar", error.message);
+    }
   };
 
   return (

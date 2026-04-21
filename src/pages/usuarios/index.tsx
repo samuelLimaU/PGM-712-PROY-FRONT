@@ -10,6 +10,7 @@ import { createUsuarioRol, getUsuarioRoles, updateUsuarioRol } from "../../servi
 import { getRoles } from "../../services/RolService";
 
 import { useSound } from "../../hooks/useSound";
+import { showSuccess, showError, showConfirm } from "../../utils/sweetAlert";
 
 const { playClick } = useSound();
 
@@ -53,8 +54,8 @@ export default function UsuarioPage() {
       });
 
       setData(dataFinal);
-    } catch (error) {
-      console.error("ERROR EN LOAD:", error);
+    } catch (error: any) {
+      showError("Error al cargar datos", error.message);
     } finally {
       setLoading(false);
     }
@@ -65,31 +66,47 @@ export default function UsuarioPage() {
   }, []);
 
   const handleSave = async (item: any) => {
-    if (editing) {
-      await updateUsuario(editing.id!, item);
-
-      if (item.rolId && item.usuarioRolId) {
-        await updateUsuarioRol(
-          item.usuarioRolId,
-          editing.id!,
-          item.rolId,
-        );
-      }
-    } else {
-      const nuevoUsuario = await createUsuario(item);
-
-      if (item.rolId) {
-        await createUsuarioRol(nuevoUsuario.id!, item.rolId);
-      }
+    try {
+        if (editing) {
+          await updateUsuario(editing.id!, item);
+    
+          if (item.rolId && item.usuarioRolId) {
+            await updateUsuarioRol(
+              item.usuarioRolId,
+              editing.id!,
+              item.rolId,
+            );
+          }
+          showSuccess("¡Actualizado!", "Usuario actualizado con éxito");
+        } else {
+          const nuevoUsuario = await createUsuario(item);
+    
+          if (item.rolId) {
+            await createUsuarioRol(nuevoUsuario.id!, item.rolId);
+          }
+          showSuccess("¡Guardado!", "Usuario creado correctamente");
+        }
+    
+        await load();
+    } catch (error: any) {
+        showError("Error al procesar usuario", error.message);
     }
-
-    await load();
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("¿Eliminar usuario?")) return;
-    await deleteUsuario(id);
-    load();
+    const isConfirmed = await showConfirm(
+        "¿Eliminar usuario?",
+        "Esta acción quitará el acceso al sistema para este usuario."
+    );
+    if (!isConfirmed) return;
+
+    try {
+        await deleteUsuario(id);
+        showSuccess("¡Eliminado!", "El usuario ha sido removido.");
+        load();
+    } catch (error: any) {
+        showError("Error al eliminar", error.message);
+    }
   };
 
   return (

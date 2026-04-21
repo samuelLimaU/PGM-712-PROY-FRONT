@@ -66,10 +66,13 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
 
   const vaciar = () => setItems([]);
 
-  const total = items.reduce(
-    (acc, i) => acc + Number(i.producto.precio) * i.cantidad,
-    0
-  );
+  const total = items.reduce((acc, i) => {
+    const precioActual =
+      i.producto.promocionActiva && i.producto.precioOferta
+        ? i.producto.precioOferta
+        : i.producto.precio;
+    return acc + Number(precioActual) * i.cantidad;
+  }, 0);
 
   const totalItems = items.reduce((acc, i) => acc + i.cantidad, 0);
 

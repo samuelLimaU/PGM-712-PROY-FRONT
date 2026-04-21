@@ -32,10 +32,10 @@ export default function CarritoDrawer({ open, onClose }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <h2 className="font-medium text-gray-800 text-base">
-            Tu carrito{" "}
+            Tu pedido{" "}
             {items.length > 0 && (
               <span className="text-gray-400 font-normal text-sm">
-                ({items.length} {items.length === 1 ? "producto" : "productos"})
+                ({items.length} {items.length === 1 ? "ítem" : "ítems"})
               </span>
             )}
           </h2>
@@ -49,9 +49,9 @@ export default function CarritoDrawer({ open, onClose }: Props) {
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center gap-3">
               <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center text-2xl">
-                🛒
+                🥟
               </div>
-              <p className="text-gray-400 text-sm">Tu carrito está vacío</p>
+              <p className="text-gray-400 text-sm">Aún no has añadido nada</p>
             </div>
           ) : (
             items.map((item) => (
@@ -70,9 +70,22 @@ export default function CarritoDrawer({ open, onClose }: Props) {
                   <p className="text-sm font-medium text-gray-800 truncate">
                     {item.producto.nombre}
                   </p>
-                  <p className="text-sm text-gray-500">
-                    ${Number(item.producto.precio).toFixed(2)}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    {item.producto.promocionActiva && item.producto.precioOferta ? (
+                      <>
+                        <span className="text-sm font-semibold text-[#FF4D4D]">
+                          Bs. {Number(item.producto.precioOferta).toFixed(2)}
+                        </span>
+                        <span className="text-xs text-gray-300 line-through">
+                          Bs. {Number(item.producto.precio).toFixed(2)}
+                        </span>
+                      </>
+                    ) : (
+                      <p className="text-sm text-gray-500">
+                        Bs. {Number(item.producto.precio).toFixed(2)}
+                      </p>
+                    )}
+                  </div>
 
                   {/* Cantidad */}
                   <div className="flex items-center gap-2 mt-1.5">
@@ -102,7 +115,9 @@ export default function CarritoDrawer({ open, onClose }: Props) {
                     <TrashIcon className="w-4 h-4" />
                   </button>
                   <p className="text-sm font-semibold text-gray-800">
-                    ${(Number(item.producto.precio) * item.cantidad).toFixed(2)}
+                    Bs. {((item.producto.promocionActiva && item.producto.precioOferta 
+                        ? Number(item.producto.precioOferta) 
+                        : Number(item.producto.precio)) * item.cantidad).toFixed(2)}
                   </p>
                 </div>
               </div>
@@ -114,22 +129,22 @@ export default function CarritoDrawer({ open, onClose }: Props) {
         {items.length > 0 && (
           <div className="px-5 py-4 border-t border-gray-100 space-y-3">
             <div className="flex justify-between text-sm text-gray-500">
-              <span>Subtotal</span>
-              <span className="font-medium text-gray-800">${total.toFixed(2)}</span>
+              <span>Total a pagar</span>
+              <span className="font-medium text-gray-800">Bs. {total.toFixed(2)}</span>
             </div>
 
             <button
               onClick={() => { onClose(); navigate("/tienda/checkout"); }}
               className="w-full bg-[#1a1a2e] text-white py-3 rounded-xl font-medium hover:bg-[#2d2d4e] transition text-sm"
             >
-              Ir al checkout →
+              Finalizar pedido →
             </button>
 
             <button
               onClick={vaciar}
               className="w-full text-gray-400 text-xs hover:text-gray-600 transition"
             >
-              Vaciar carrito
+              Limpiar pedido
             </button>
           </div>
         )}

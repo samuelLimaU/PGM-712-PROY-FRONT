@@ -7,4 +7,10 @@ export interface Producto {
   imagenUrl?: string;
   activo?: boolean;
   createdAt?: string;
+
+  // Campos de Promoción (vienen del backend)
+  promocionActiva?: boolean;
+  precioOferta?: number;
+  tipoPromocion?: string; // BANNER, DESCUENTO_PORCENTAJE, DESCUENTO_FIJO
+  tituloPromocion?: string;
 }

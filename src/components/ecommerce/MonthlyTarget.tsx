@@ -5,8 +5,9 @@ import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { MoreDotIcon } from "../../icons";
 
-export default function MonthlyTarget() {
-  const series = [75.55];
+export default function MonthlyTarget({ series: customSeries }: { series?: any[] }) {
+  const defaultSeries = [75.55];
+  const series = customSeries || defaultSeries;
   const options: ApexOptions = {
     colors: ["#465FFF"],
     chart: {

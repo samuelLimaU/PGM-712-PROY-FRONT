@@ -1,7 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCarrito } from "./context/CarritoContext";
 import { useNavigate } from "react-router";
 import { ChevronLeftIcon, CheckCircleIcon } from "@heroicons/react/24/solid";
+import { useAuth } from "../../context/AuthContext";
+import { crearPedido } from "../../services/PedidoService";
+import { PedidoRequestDTO } from "../../types/Pedido";
+import { showError } from "../../utils/sweetAlert";
 
 const BASE = "http://localhost:8080";
 
@@ -17,6 +21,7 @@ type Paso = "datos" | "resumen" | "confirmado";
 
 export default function CheckoutPage() {
   const { items, total, vaciar } = useCarrito();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [paso, setPaso] = useState<Paso>("datos");
   const [enviando, setEnviando] = useState(false);
@@ -29,6 +34,17 @@ export default function CheckoutPage() {
     referencia: "",
   });
 
+  // Pre-cargar datos si hay usuario logueado
+  useEffect(() => {
+    if (user) {
+      setDatos((prev) => ({
+        ...prev,
+        nombre: `${user.nombre} ${user.apellido || ""}`.trim(),
+        telefono: user.telefono || "",
+      }));
+    }
+  }, [user]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setDatos({ ...datos, [e.target.name]: e.target.value });
   };
@@ -36,10 +52,25 @@ export default function CheckoutPage() {
   const handleConfirmar = async () => {
     setEnviando(true);
     try {
-      // Por ahora solo simulamos — luego conectamos al backend
-      await new Promise((r) => setTimeout(r, 800));
+      const request: PedidoRequestDTO = {
+        usuarioId: user?.id,
+        nombre: datos.nombre,
+        telefono: datos.telefono,
+        direccion: datos.direccion,
+        ciudad: datos.ciudad,
+        referencia: datos.referencia,
+        items: items.map(item => ({
+          productoId: item.producto.id!,
+          cantidad: item.cantidad
+        }))
+      };
+
+      await crearPedido(request);
+      
       vaciar();
       setPaso("confirmado");
+    } catch (error: any) {
+      showError("Error al procesar pedido", error.message || "No se pudo completar la compra");
     } finally {
       setEnviando(false);
     }
@@ -106,7 +137,31 @@ export default function CheckoutPage() {
         {/* ── PASO 1: Datos ── */}
         {paso === "datos" && (
           <div className="space-y-4">
-            <p className="text-sm text-gray-500 mb-6">
+            
+            {/* Banner de Login / Cambio de Cuenta */}
+            <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-xl">👤</span>
+                <div>
+                  <p className="text-sm font-medium text-blue-900">
+                    {user ? `Estás como ${user.nombre}` : "Compra más rápido"}
+                  </p>
+                  <p className="text-xs text-blue-700">
+                    {user 
+                      ? "¿Quieres usar otra cuenta?" 
+                      : "Inicia sesión para usar tus datos guardados."}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => navigate(`/signin?redirect=/tienda/checkout`)}
+                className="text-xs font-bold text-blue-600 hover:text-blue-800 uppercase tracking-wider"
+              >
+                {user ? "Cambiar cuenta" : "Iniciar sesión"}
+              </button>
+            </div>
+
+            <p className="text-sm text-gray-500 mb-2">
               Completa tus datos para coordinar la entrega.
             </p>
 
@@ -222,20 +277,22 @@ export default function CheckoutPage() {
                         {item.producto.nombre}
                       </p>
                       <p className="text-xs text-gray-400">
-                        {item.cantidad} × ${Number(item.producto.precio).toFixed(2)}
+                        {item.cantidad} × Bs. {Number(item.producto.promocionActiva && item.producto.precioOferta ? item.producto.precioOferta : item.producto.precio).toFixed(2)}
                       </p>
                     </div>
                     <p className="text-sm font-semibold text-gray-800 flex-shrink-0">
-                      ${(Number(item.producto.precio) * item.cantidad).toFixed(2)}
+                      Bs. {((item.producto.promocionActiva && item.producto.precioOferta 
+                        ? Number(item.producto.precioOferta) 
+                        : Number(item.producto.precio)) * item.cantidad).toFixed(2)}
                     </p>
                   </div>
                 ))}
               </div>
 
               <div className="border-t border-gray-100 mt-4 pt-4 flex justify-between">
-                <span className="text-sm text-gray-500">Total</span>
+                <span className="text-sm text-gray-500">Total a pagar</span>
                 <span className="text-lg font-semibold text-gray-800">
-                  ${total.toFixed(2)}
+                  Bs. {total.toFixed(2)}
                 </span>
               </div>
             </div>
@@ -243,7 +300,7 @@ export default function CheckoutPage() {
             {/* Datos entrega */}
             <div className="bg-white rounded-2xl border border-gray-100 p-6">
               <h3 className="font-medium text-gray-800 text-sm uppercase tracking-wide mb-3">
-                Entrega a
+                Entregar pedido a
               </h3>
               <div className="space-y-1 text-sm text-gray-600">
                 <p className="font-medium text-gray-800">{datos.nombre}</p>

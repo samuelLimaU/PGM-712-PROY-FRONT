@@ -4,7 +4,7 @@ import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import ComponentCard from "../../components/common/ComponentCard";
 
 import RolesTable from "./RolTable";
-import RolForm from "./RolForm"; //
+import RolForm from "./RolForm";
 
 import { Rol } from "../../types/Rol";
 import {
@@ -13,6 +13,7 @@ import {
   updateRol,
   deleteRol,
 } from "../../services/RolService";
+import { showSuccess, showError, showConfirm } from "../../utils/sweetAlert";
 
 export default function RolesPage() {
   const [roles, setRoles] = useState<Rol[]>([]);
@@ -26,8 +27,8 @@ export default function RolesPage() {
     try {
       const data = await getRoles();
       setRoles(data);
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      showError("Error al cargar roles", e.message);
     }
     setLoading(false);
   };
@@ -40,26 +41,33 @@ export default function RolesPage() {
     try {
       if (editingRol) {
         await updateRol(editingRol.id!, rol);
+        showSuccess("¡Actualizado!", "Rol actualizado correctamente");
       } else {
         await createRol(rol);
+        showSuccess("¡Guardado!", "Nuevo rol creado correctamente");
       }
 
       setOpenModal(false);
       setEditingRol(null);
       loadRoles();
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      showError("Error al procesar rol", e.message);
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("¿Eliminar rol?")) return;
+    const isConfirmed = await showConfirm(
+      "¿Eliminar rol?",
+      "Ten en cuenta que esto podría afectar a los usuarios que tengan este rol asignado."
+    );
+    if (!isConfirmed) return;
 
     try {
       await deleteRol(id);
+      showSuccess("¡Eliminado!", "El rol ha sido removido del sistema.");
       loadRoles();
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      showError("Error al eliminar rol", e.message);
     }
   };
 

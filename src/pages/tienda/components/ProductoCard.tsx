@@ -28,6 +28,21 @@ export default function ProductoCard({ producto }: Props) {
             Sin imagen
           </div>
         )}
+
+        {/* Badge de Promoción */}
+        {producto.promocionActiva && (
+          <div className="absolute top-3 left-3 flex flex-col gap-1 z-10">
+            <span className="bg-[#FF4D4D] text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-md">
+              {producto.tituloPromocion || "Oferta"}
+            </span>
+            {producto.precioOferta && (
+              <span className="bg-white text-[#FF4D4D] text-[9px] font-black px-2 py-0.5 rounded-full uppercase border border-[#FF4D4D] shadow-sm">
+                -{Math.round((1 - Number(producto.precioOferta) / Number(producto.precio)) * 100)}%
+              </span>
+            )}
+          </div>
+        )}
+
         {sinStock && (
           <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
             <span className="bg-white border border-gray-200 text-gray-500 text-xs font-medium px-3 py-1 rounded-full">
@@ -49,9 +64,22 @@ export default function ProductoCard({ producto }: Props) {
         )}
 
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-          <span className="text-lg font-semibold text-gray-800">
-            ${Number(producto.precio).toFixed(2)}
-          </span>
+          <div className="flex flex-col">
+            {producto.promocionActiva && producto.precioOferta ? (
+              <>
+                <span className="text-xs text-gray-400 line-through">
+                  Bs. {Number(producto.precio).toFixed(2)}
+                </span>
+                <span className="text-lg font-bold text-[#FF4D4D]">
+                  Bs. {Number(producto.precioOferta).toFixed(2)}
+                </span>
+              </>
+            ) : (
+              <span className="text-lg font-semibold text-gray-800">
+                Bs. {Number(producto.precio).toFixed(2)}
+              </span>
+            )}
+          </div>
 
           {!sinStock && (
             <button
@@ -62,7 +90,7 @@ export default function ProductoCard({ producto }: Props) {
                   : "bg-[#1a1a2e] text-white hover:bg-[#2d2d4e]"
               }`}
             >
-              {enCarrito ? `En carrito (${enCarrito.cantidad})` : "Agregar"}
+              {enCarrito ? `Agregado (${enCarrito.cantidad})` : "Añadir"}
             </button>
           )}
         </div>
