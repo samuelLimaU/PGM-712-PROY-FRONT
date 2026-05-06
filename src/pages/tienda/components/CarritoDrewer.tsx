@@ -1,6 +1,11 @@
 import { useCarrito } from "../context/CarritoContext";
-import { XMarkIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useNavigate } from "react-router";
+import { 
+  CloseIcon, 
+  TrashBinIcon, 
+  BoxCubeIcon, 
+  ArrowRightIcon 
+} from "../../../icons";
 
 const BASE = "http://localhost:8080";
 
@@ -39,8 +44,8 @@ export default function CarritoDrawer({ open, onClose }: Props) {
               </span>
             )}
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <XMarkIcon className="w-5 h-5" />
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition">
+            <CloseIcon className="w-5 h-5" />
           </button>
         </div>
 
@@ -48,8 +53,8 @@ export default function CarritoDrawer({ open, onClose }: Props) {
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center gap-3">
-              <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center text-2xl">
-                🥟
+              <div className="w-20 h-20 rounded-full bg-gray-50 flex items-center justify-center text-gray-300">
+                <BoxCubeIcon className="w-10 h-10" />
               </div>
               <p className="text-gray-400 text-sm">Aún no has añadido nada</p>
             </div>
@@ -91,7 +96,7 @@ export default function CarritoDrawer({ open, onClose }: Props) {
                   <div className="flex items-center gap-2 mt-1.5">
                     <button
                       onClick={() => cambiarCantidad(item.producto.id!, item.cantidad - 1)}
-                      className="w-6 h-6 rounded-lg border border-gray-200 text-gray-500 text-sm hover:bg-gray-50 flex items-center justify-center"
+                      className="w-6 h-6 rounded-lg border border-gray-200 text-gray-500 text-sm hover:bg-gray-50 flex items-center justify-center transition"
                     >
                       −
                     </button>
@@ -100,7 +105,7 @@ export default function CarritoDrawer({ open, onClose }: Props) {
                     </span>
                     <button
                       onClick={() => cambiarCantidad(item.producto.id!, item.cantidad + 1)}
-                      className="w-6 h-6 rounded-lg border border-gray-200 text-gray-500 text-sm hover:bg-gray-50 flex items-center justify-center"
+                      className="w-6 h-6 rounded-lg border border-gray-200 text-gray-500 text-sm hover:bg-gray-50 flex items-center justify-center transition"
                     >
                       +
                     </button>
@@ -112,7 +117,7 @@ export default function CarritoDrawer({ open, onClose }: Props) {
                     onClick={() => quitar(item.producto.id!)}
                     className="text-gray-300 hover:text-red-400 transition"
                   >
-                    <TrashIcon className="w-4 h-4" />
+                    <TrashBinIcon className="w-5 h-5" />
                   </button>
                   <p className="text-sm font-semibold text-gray-800">
                     Bs. {((item.producto.promocionActiva && item.producto.precioOferta 
@@ -135,9 +140,10 @@ export default function CarritoDrawer({ open, onClose }: Props) {
 
             <button
               onClick={() => { onClose(); navigate("/tienda/checkout"); }}
-              className="w-full bg-[#1a1a2e] text-white py-3 rounded-xl font-medium hover:bg-[#2d2d4e] transition text-sm"
+              className="w-full flex items-center justify-center gap-2 bg-[#1a1a2e] text-white py-3 rounded-xl font-medium hover:bg-[#2d2d4e] transition text-sm"
             >
-              Finalizar pedido →
+              Finalizar pedido
+              <ArrowRightIcon className="w-4 h-4" />
             </button>
 
             <button

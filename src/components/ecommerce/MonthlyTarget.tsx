@@ -126,7 +126,7 @@ export default function MonthlyTarget({ series: customSeries }: { series?: any[]
             Target
           </p>
           <p className="flex items-center justify-center gap-1 text-base font-semibold text-gray-800 dark:text-white/90 sm:text-lg">
-            $20K
+            Bs. 20K
             <svg
               width="16"
               height="16"
@@ -151,7 +151,7 @@ export default function MonthlyTarget({ series: customSeries }: { series?: any[]
             Revenue
           </p>
           <p className="flex items-center justify-center gap-1 text-base font-semibold text-gray-800 dark:text-white/90 sm:text-lg">
-            $20K
+            Bs. 20K
             <svg
               width="16"
               height="16"
@@ -176,7 +176,7 @@ export default function MonthlyTarget({ series: customSeries }: { series?: any[]
             Today
           </p>
           <p className="flex items-center justify-center gap-1 text-base font-semibold text-gray-800 dark:text-white/90 sm:text-lg">
-            $20K
+            Bs. 20K
             <svg
               width="16"
               height="16"

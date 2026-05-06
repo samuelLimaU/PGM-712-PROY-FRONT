@@ -21,11 +21,17 @@ export const createProducto = async (formData: FormData) => {
 
 export const deleteProducto = async (id: number) => {
   const res = await http.delete(`${BASE}/${id}`);
-  if (!res.ok) throw new Error("Error al borrar el producto");
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error || "Error al borrar el producto");
+  }
 };
 
 export async function updateProducto(id: number, formData: FormData): Promise<Producto> {
   const res = await http.putForm(`${BASE}/${id}`, formData);
-  if (!res.ok) throw new Error("Error al actualizar producto");
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error || "Error al actualizar producto");
+  }
   return res.json();
 }

@@ -62,7 +62,7 @@ const tableData: Product[] = [
     name: "AirPods Pro 2nd Gen",
     variants: "1 Variant",
     category: "Accessories",
-    price: "$240.00",
+    price: "Bs. 240.00",
     status: "Delivered",
     image: "/images/product/product-05.jpg", // Replace with actual image URL
   },

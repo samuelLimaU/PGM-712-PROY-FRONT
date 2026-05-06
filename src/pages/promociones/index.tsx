@@ -14,6 +14,7 @@ import { useSound } from "../../hooks/useSound";
 import PromocionTable from "./PromocionTable";
 import PromocionForm from "./PromocionForm";
 import { showSuccess, showError, showConfirm, showInfo } from "../../utils/sweetAlert";
+import Pagination from "../../components/ui/Pagination";
 
 export default function PromocionPage() {
   const [data, setData] = useState<Promocion[]>([]);
@@ -23,12 +24,17 @@ export default function PromocionPage() {
   const [openModal, setOpenModal] = useState(false);
   const { playClick } = useSound();
 
+  // Estados de Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+
   const load = async () => {
     try {
       setLoading(true);
       const [promos, prods] = await Promise.all([getPromociones(), getProductos()]);
       setData(promos);
       setProductos(prods);
+      setCurrentPage(1);
     } catch (error) {
       console.error("Error al cargar datos:", error);
     } finally {
@@ -40,9 +46,14 @@ export default function PromocionPage() {
     load();
   }, []);
 
+  // Lógica de Paginación
+  const totalPages = Math.ceil(data.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentPromos = data.slice(indexOfFirstItem, indexOfLastItem);
+
   const handleSave = async (formData: any) => {
     try {
-        // Limpiamos el payload para el backend
         const payload = {
           titulo: formData.titulo,
           descripcion: formData.descripcion || null,
@@ -87,7 +98,6 @@ export default function PromocionPage() {
 
   const handleToggleActivo = async (promo: Promocion) => {
     try {
-      // Re-mapeamos para asegurar que el payload sea idéntico al que espera el DTO
       const payload = {
         titulo: promo.titulo,
         descripcion: promo.descripcion || null,
@@ -131,7 +141,7 @@ export default function PromocionPage() {
             <p>Cargando...</p>
           ) : (
             <PromocionTable
-              data={data}
+              data={currentPromos}
               productos={productos}
               onEdit={(item) => {
                 setEditing(item);
@@ -142,6 +152,37 @@ export default function PromocionPage() {
             />
           )}
         </ComponentCard>
+
+        {/* Footer de Paginación */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-4 bg-white p-4 rounded-2xl border border-gray-100">
+          <div className="flex items-center gap-3 text-sm text-gray-600">
+            <span>Mostrar</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="border border-gray-200 rounded-lg px-3 py-1.5 outline-none focus:border-brand-500 bg-gray-50 font-medium"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            <span>registros por página</span>
+          </div>
+
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => {
+              setCurrentPage(page);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          />
+        </div>
       </div>
 
       <PromocionForm

@@ -1,19 +1,14 @@
 import { useEffect, useState } from "react";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import ComponentCard from "../../components/common/ComponentCard";
-
 import UsuarioTable from "./UsuarioTable";
 import UsuarioForm from "./UsuarioForm";
-
 import { Usuario } from "../../types/Usuario";
 import { createUsuarioRol, getUsuarioRoles, updateUsuarioRol } from "../../services/UsuarioRolService";
 import { getRoles } from "../../services/RolService";
-
 import { useSound } from "../../hooks/useSound";
 import { showSuccess, showError, showConfirm } from "../../utils/sweetAlert";
-
-const { playClick } = useSound();
-
+import Pagination from "../../components/ui/Pagination";
 import {
   getUsuarios,
   createUsuario,
@@ -26,6 +21,11 @@ export default function UsuarioPage() {
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState<Usuario | null>(null);
   const [openModal, setOpenModal] = useState(false);
+  const { playClick } = useSound();
+
+  // Estados de Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
 
   const load = async () => {
     try {
@@ -54,6 +54,7 @@ export default function UsuarioPage() {
       });
 
       setData(dataFinal);
+      setCurrentPage(1);
     } catch (error: any) {
       showError("Error al cargar datos", error.message);
     } finally {
@@ -64,6 +65,12 @@ export default function UsuarioPage() {
   useEffect(() => {
     load();
   }, []);
+
+  // Lógica de Paginación
+  const totalPages = Math.ceil(data.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentData = data.slice(indexOfFirstItem, indexOfLastItem);
 
   const handleSave = async (item: any) => {
     try {
@@ -115,8 +122,6 @@ export default function UsuarioPage() {
 
       <div className="space-y-6">
         <ComponentCard title="Gestión de Usuarios">
-          
-          {/* BOTÓN NUEVO */}
           <button
             onClick={() => {
               setEditing(null);
@@ -128,12 +133,11 @@ export default function UsuarioPage() {
             + Nuevo Usuario
           </button>
 
-          {/* TABLA */}
           {loading ? (
             <p>Cargando...</p>
           ) : (
             <UsuarioTable
-              data={data}
+              data={currentData}
               onEdit={(item) => {
                 setEditing(item);
                 setOpenModal(true);
@@ -142,6 +146,37 @@ export default function UsuarioPage() {
             />
           )}
         </ComponentCard>
+
+        {/* Footer de Paginación */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-4 bg-white p-4 rounded-2xl border border-gray-100">
+          <div className="flex items-center gap-3 text-sm text-gray-600">
+            <span>Mostrar</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="border border-gray-200 rounded-lg px-3 py-1.5 outline-none focus:border-brand-500 bg-gray-50 font-medium"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            <span>registros por página</span>
+          </div>
+
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => {
+              setCurrentPage(page);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          />
+        </div>
       </div>
 
       <UsuarioForm
@@ -149,7 +184,7 @@ export default function UsuarioPage() {
         editing={editing}
         onSave={async (data) => {
           await handleSave(data);
-          setOpenModal(false); // cerrar modal
+          setOpenModal(false);
         }}
         onCancel={() => setOpenModal(false)}
       />

@@ -1,11 +1,19 @@
 import { useState, useEffect } from "react";
 import { useCarrito } from "./context/CarritoContext";
 import { useNavigate } from "react-router";
-import { ChevronLeftIcon, CheckCircleIcon } from "@heroicons/react/24/solid";
+import { QRCodeSVG } from "qrcode.react";
+import { 
+  ChevronLeftIcon, 
+  CheckCircleIcon, 
+  UserCircleIcon, 
+  DollarLineIcon, 
+  ArrowRightIcon,
+  HorizontalDotsIcon
+} from "../../icons";
 import { useAuth } from "../../context/AuthContext";
-import { crearPedido } from "../../services/PedidoService";
-import { PedidoRequestDTO } from "../../types/Pedido";
-import { showError } from "../../utils/sweetAlert";
+import { crearPedido, registrarPagoPedido } from "../../services/PedidoService";
+import { PedidoRequestDTO, MetodoPago } from "../../types/Pedido";
+import { showError, showSuccess } from "../../utils/sweetAlert";
 
 const BASE = "http://localhost:8080";
 
@@ -25,6 +33,9 @@ export default function CheckoutPage() {
   const navigate = useNavigate();
   const [paso, setPaso] = useState<Paso>("datos");
   const [enviando, setEnviando] = useState(false);
+  const [metodoPago, setMetodoPago] = useState<MetodoPago>("EFECTIVO");
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [pedidoIdActual, setPedidoIdActual] = useState<number | null>(null);
 
   const [datos, setDatos] = useState<DatosCliente>({
     nombre: "",
@@ -65,12 +76,33 @@ export default function CheckoutPage() {
         }))
       };
 
-      await crearPedido(request);
-      
-      vaciar();
-      setPaso("confirmado");
+      const id = await crearPedido(request);
+      setPedidoIdActual(id);
+
+      if (metodoPago === "QR") {
+        setShowQRModal(true);
+      } else {
+        vaciar();
+        setPaso("confirmado");
+      }
     } catch (error: any) {
       showError("Error al procesar pedido", error.message || "No se pudo completar la compra");
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  const handleSimularPagoQR = async () => {
+    if (!pedidoIdActual) return;
+    setEnviando(true);
+    try {
+      await registrarPagoPedido(pedidoIdActual, "QR", "Pago simulado por QR");
+      setShowQRModal(false);
+      vaciar();
+      setPaso("confirmado");
+      showSuccess("Pago realizado", "Tu pago por QR ha sido procesado con éxito.");
+    } catch (error: any) {
+      showError("Error al procesar pago", error.message || "No se pudo completar el pago");
     } finally {
       setEnviando(false);
     }
@@ -80,11 +112,12 @@ export default function CheckoutPage() {
   if (items.length === 0 && paso !== "confirmado") {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4">
-        <p className="text-gray-500">Tu carrito está vacío.</p>
+        <p className="text-gray-500 font-medium">Tu carrito está vacío.</p>
         <button
           onClick={() => navigate("/tienda")}
-          className="text-sm text-[#1D9E75] hover:underline"
+          className="flex items-center gap-2 text-sm text-[#1D9E75] hover:text-[#0F6E56] font-semibold transition"
         >
+          <ChevronLeftIcon className="w-4 h-4" />
           Volver al catálogo
         </button>
       </div>
@@ -98,7 +131,7 @@ export default function CheckoutPage() {
       <nav className="bg-white border-b border-gray-100 px-6 py-3 flex items-center gap-3">
         <button
           onClick={() => paso === "datos" ? navigate("/tienda") : setPaso("datos")}
-          className="text-gray-400 hover:text-gray-600 transition"
+          className="text-gray-400 hover:text-gray-600 transition p-1 rounded-full hover:bg-gray-50"
         >
           <ChevronLeftIcon className="w-5 h-5" />
         </button>
@@ -141,7 +174,9 @@ export default function CheckoutPage() {
             {/* Banner de Login / Cambio de Cuenta */}
             <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="text-xl">👤</span>
+                <div className="bg-white p-2 rounded-xl shadow-sm text-blue-600">
+                  <UserCircleIcon className="w-6 h-6" />
+                </div>
                 <div>
                   <p className="text-sm font-medium text-blue-900">
                     {user ? `Estás como ${user.nombre}` : "Compra más rápido"}
@@ -244,9 +279,10 @@ export default function CheckoutPage() {
             <button
               onClick={() => setPaso("resumen")}
               disabled={!datos.nombre || !datos.telefono || !datos.direccion}
-              className="w-full bg-[#1a1a2e] text-white py-3 rounded-xl font-medium text-sm hover:bg-[#2d2d4e] transition disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 bg-[#1a1a2e] text-white py-3 rounded-xl font-medium text-sm hover:bg-[#2d2d4e] transition disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              Ver resumen →
+              Ver resumen
+              <ArrowRightIcon className="w-4 h-4" />
             </button>
           </div>
         )}
@@ -315,16 +351,50 @@ export default function CheckoutPage() {
             {/* Pago */}
             <div className="bg-white rounded-2xl border border-gray-100 p-6">
               <h3 className="font-medium text-gray-800 text-sm uppercase tracking-wide mb-3">
-                Pago
+                Método de Pago
               </h3>
-              <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
-                <span className="text-lg">💵</span>
-                <div>
-                  <p className="text-sm font-medium text-gray-800">Contra entrega</p>
-                  <p className="text-xs text-gray-400">
-                    El método de pago se coordina al momento de la entrega
-                  </p>
-                </div>
+              <div className="space-y-3">
+                <button
+                  onClick={() => setMetodoPago("EFECTIVO")}
+                  className={`w-full flex items-center gap-3 rounded-xl px-4 py-3 border transition ${
+                    metodoPago === "EFECTIVO" 
+                      ? "border-[#1D9E75] bg-green-50" 
+                      : "border-gray-100 bg-gray-50"
+                  }`}
+                >
+                  <div className={`p-2 rounded-lg shadow-sm ${metodoPago === "EFECTIVO" ? "bg-[#1D9E75] text-white" : "bg-white text-gray-400"}`}>
+                    <DollarLineIcon className="w-5 h-5" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-medium text-gray-800">Contra entrega (Efectivo)</p>
+                    <p className="text-xs text-gray-400">Paga al recibir tus salteñas</p>
+                  </div>
+                  {metodoPago === "EFECTIVO" && <CheckCircleIcon className="ml-auto w-5 h-5 text-[#1D9E75]" />}
+                </button>
+
+                <button
+                  onClick={() => setMetodoPago("QR")}
+                  className={`w-full flex items-center gap-3 rounded-xl px-4 py-3 border transition ${
+                    metodoPago === "QR" 
+                      ? "border-[#1D9E75] bg-green-50" 
+                      : "border-gray-100 bg-gray-50"
+                  }`}
+                >
+                  <div className={`p-2 rounded-lg shadow-sm ${metodoPago === "QR" ? "bg-[#1D9E75] text-white" : "bg-white text-gray-400"}`}>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m0 11v1m5-10v1m0 11v1M4 12h1m11 0h1M4 12v1m0 11v1m5-10v1m0 11v1M4 12h1m11 0h1" />
+                      <rect x="3" y="3" width="7" height="7" rx="1" />
+                      <rect x="14" y="3" width="7" height="7" rx="1" />
+                      <rect x="3" y="14" width="7" height="7" rx="1" />
+                      <path d="M14 14h3v3h-3zM18 18h3v3h-3zM14 18h3v3h-3zM18 14h3v3h-3z" />
+                    </svg>
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-medium text-gray-800">Transferencia QR</p>
+                    <p className="text-xs text-gray-400">Simulación de pago bancario rápido</p>
+                  </div>
+                  {metodoPago === "QR" && <CheckCircleIcon className="ml-auto w-5 h-5 text-[#1D9E75]" />}
+                </button>
               </div>
             </div>
 
@@ -348,7 +418,9 @@ export default function CheckoutPage() {
         {/* ── PASO 3: Confirmado ── */}
         {paso === "confirmado" && (
           <div className="flex flex-col items-center justify-center py-16 text-center gap-4">
-            <CheckCircleIcon className="w-16 h-16 text-[#1D9E75]" />
+            <div className="bg-white p-4 rounded-full shadow-lg text-[#1D9E75] mb-2">
+               <CheckCircleIcon className="w-16 h-16" />
+            </div>
             <h2 className="text-2xl font-semibold text-gray-800">¡Pedido recibido!</h2>
             <p className="text-gray-500 text-sm max-w-xs leading-relaxed">
               Gracias {datos.nombre?.split(" ")[0]}. Nos pondremos en contacto
@@ -357,13 +429,121 @@ export default function CheckoutPage() {
             </p>
             <button
               onClick={() => navigate("/tienda")}
-              className="mt-4 bg-[#1a1a2e] text-white px-8 py-3 rounded-xl text-sm font-medium hover:bg-[#2d2d4e] transition"
+              className="mt-4 flex items-center gap-2 bg-[#1a1a2e] text-white px-8 py-3 rounded-xl text-sm font-medium hover:bg-[#2d2d4e] transition"
             >
               Seguir comprando
+              <ArrowRightIcon className="w-4 h-4" />
             </button>
           </div>
         )}
       </div>
+
+      {/* ── MODAL DE PAGO QR (SIMULACIÓN) ── */}
+      {showQRModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white w-full max-w-4xl rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row">
+            
+            {/* Parte Izquierda: El QR */}
+            <div className="flex-1 p-8 flex flex-col items-center justify-center bg-gray-50 border-r border-gray-100">
+              <div className="mb-6 text-center">
+                <h3 className="text-xl font-bold text-gray-800">Escanea para pagar</h3>
+                <p className="text-sm text-gray-500">Pedido #{pedidoIdActual}</p>
+              </div>
+              
+              <div className="bg-white p-6 rounded-3xl shadow-xl border border-gray-100 mb-6">
+                <QRCodeSVG 
+                  value={`http://multimedia2.com/pay/${pedidoIdActual}?amount=${total}`} 
+                  size={200}
+                  level="H"
+                  includeMargin={false}
+                />
+              </div>
+
+              <div className="text-center">
+                <p className="text-2xl font-bold text-gray-800 mb-1">Bs. {total.toFixed(2)}</p>
+                <p className="text-xs text-gray-400 uppercase tracking-widest font-medium">Monto Total</p>
+              </div>
+
+              <div className="mt-8 flex items-center gap-2 text-[#1D9E75] bg-green-50 px-4 py-2 rounded-full">
+                <div className="w-2 h-2 bg-[#1D9E75] rounded-full animate-pulse" />
+                <span className="text-xs font-bold uppercase tracking-tight">Esperando confirmación...</span>
+              </div>
+            </div>
+
+            {/* Parte Derecha: Simulación Móvil (Actualizado a Blanco/Verde) */}
+            <div className="w-full md:w-[360px] bg-white p-6 flex flex-col relative overflow-hidden border-l border-gray-100">
+              
+              {/* Decoración superior de "móvil" */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-gray-100 rounded-b-2xl z-10" />
+              
+              <div className="mt-8 flex-1 flex flex-col">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                    <UserCircleIcon className="w-6 h-6 text-gray-400" />
+                  </div>
+                  <HorizontalDotsIcon className="text-gray-300 w-5 h-5" />
+                </div>
+
+                <div className="bg-[#1D9E75]/5 rounded-2xl p-4 border border-[#1D9E75]/10 mb-6">
+                  <p className="text-[10px] text-[#1D9E75] uppercase font-bold tracking-widest mb-1">Banca Móvil</p>
+                  <p className="text-gray-800 font-medium">La Cruceña Pay</p>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="text-gray-800 text-lg font-semibold">Detalles del pago</h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-400">Destino:</span>
+                      <span className="text-gray-800 font-medium">Salteñería La Cruceña</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-400">Concepto:</span>
+                      <span className="text-gray-800 font-medium">Pedido #{pedidoIdActual}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-400">Total:</span>
+                      <span className="text-[#1D9E75] font-bold text-base">Bs. {total.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-auto pt-8">
+                  <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100 mb-4">
+                    <p className="text-[10px] text-gray-500 font-bold leading-tight">
+                      Para efectos de la demostración, haz clic en el botón de abajo para simular la confirmación bancaria.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleSimularPagoQR}
+                    disabled={enviando}
+                    className="w-full bg-[#1D9E75] text-white py-4 rounded-2xl font-bold text-sm shadow-lg shadow-green-900/10 active:scale-95 transition-all flex items-center justify-center gap-2 hover:bg-[#168965]"
+                  >
+                    {enviando ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <CheckCircleIcon className="w-5 h-5" />
+                        Confirmar Pago
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setShowQRModal(false)}
+                    className="w-full mt-3 text-gray-400 text-xs hover:text-gray-600 transition py-2"
+                  >
+                    Cancelar y volver
+                  </button>
+                </div>
+              </div>
+
+              {/* Marca de agua / Brillo */}
+              <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-[#1D9E75] opacity-5 blur-[100px] pointer-events-none" />
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

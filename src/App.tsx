@@ -24,6 +24,7 @@ import Pedidos from "./pages/pedidos";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import Producto from "./pages/productos";
+import AnalisisApriori from "./pages/pedidos/AnalisisApriori";
 import { CarritoProvider } from "./pages/tienda/context/CarritoContext";
 import CatalogoPage from "./pages/tienda/";
 import CheckoutPage from "./pages/tienda/CheckoutPage";
@@ -46,6 +47,7 @@ export default function App() {
               <Route path="/roles" element={<Roles />} />
               <Route path="/productos" element={<Producto />} />
               <Route path="/promociones" element={<Promocion />} />
+              <Route path="/estimacion" element={<AnalisisApriori />} />
               <Route path="/pedidos" element={<Pedidos />} />
               <Route path="/profile" element={<UserProfiles />} />
               <Route path="/calendar" element={<Calendar />} />

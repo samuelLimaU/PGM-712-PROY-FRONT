@@ -3,10 +3,11 @@ import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import ComponentCard from "../../components/common/ComponentCard";
 import { getPedidos, actualizarEstadoPedido, registrarPagoPedido } from "../../services/PedidoService";
 import { EstadoPedido, PedidoResponse } from "../../types/Pedido";
-import { showSuccess, showError } from "../../utils/sweetAlert";
+import { showSuccess, showError, showConfirm } from "../../utils/sweetAlert";
 import Badge from "../../components/ui/badge/Badge";
 import { useModal } from "../../hooks/useModal";
 import PedidoDetalleModal from "./PedidoDetalleModal";
+import Pagination from "../../components/ui/Pagination";
 
 export default function PedidoPage() {
   const [pedidos, setPedidos] = useState<PedidoResponse[]>([]);
@@ -14,11 +15,18 @@ export default function PedidoPage() {
   const [selectedPedido, setSelectedPedido] = useState<PedidoResponse | null>(null);
   const { isOpen, openModal, closeModal } = useModal();
 
+  // Estados de Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+
   const load = async () => {
     try {
       setLoading(true);
       const data = await getPedidos();
-      setPedidos(data);
+      // Ordenar por ID descendente para ver los últimos primero
+      const sortedData = [...data].sort((a, b) => b.id - a.id);
+      setPedidos(sortedData);
+      setCurrentPage(1); // Reiniciar a la primera página al cargar
     } catch (error: any) {
       showError("Error al cargar pedidos", error.message);
     } finally {
@@ -29,6 +37,12 @@ export default function PedidoPage() {
   useEffect(() => {
     load();
   }, []);
+
+  // Lógica de Paginación
+  const totalPages = Math.ceil(pedidos.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentPedidos = pedidos.slice(indexOfFirstItem, indexOfLastItem);
 
   const handleEstadoChange = async (id: number, nuevoEstado: EstadoPedido) => {
     try {
@@ -41,6 +55,13 @@ export default function PedidoPage() {
   };
 
   const handleRegistrarPago = async (id: number) => {
+    const isConfirmed = await showConfirm(
+      "¿Verificar pago?",
+      "Asegúrate de haber recibido el dinero antes de marcarlo como pagado."
+    );
+
+    if (!isConfirmed) return;
+
     try {
       await registrarPagoPedido(id, "EFECTIVO", "Pago registrado por administrador");
       showSuccess("¡Pago registrado!", "El pedido ha sido marcado como pagado.");
@@ -58,6 +79,7 @@ export default function PedidoPage() {
   const getBadgeColor = (estado: string) => {
     switch (estado) {
       case "PENDIENTE": return "warning";
+      case "PAGADO": return "success";
       case "PREPARANDO": return "info";
       case "ENVIADO": return "primary";
       case "ENTREGADO": return "success";
@@ -81,7 +103,6 @@ export default function PedidoPage() {
               <table className="w-full text-left">
                 <thead className="border-b border-gray-100">
                   <tr>
-                    <th className="px-4 py-3 text-sm font-medium text-gray-500">ID</th>
                     <th className="px-4 py-3 text-sm font-medium text-gray-500">Cliente</th>
                     <th className="px-4 py-3 text-sm font-medium text-gray-500">Fecha</th>
                     <th className="px-4 py-3 text-sm font-medium text-gray-500">Total</th>
@@ -90,9 +111,8 @@ export default function PedidoPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {pedidos.map((p) => (
+                  {currentPedidos.map((p) => (
                     <tr key={p.id} className="hover:bg-gray-50/50 transition">
-                      <td className="px-4 py-4 text-sm font-medium text-gray-800">#{p.id}</td>
                       <td className="px-4 py-4 text-sm text-gray-800">
                         <div className="font-medium">{p.clienteNombre}</div>
                         <div className="text-xs text-gray-400">{p.clienteTelefono}</div>
@@ -121,17 +141,20 @@ export default function PedidoPage() {
                           onChange={(e) => handleEstadoChange(p.id, e.target.value as EstadoPedido)}
                         >
                           <option value="PENDIENTE">PENDIENTE</option>
+                          <option value="PAGADO">PAGADO</option>
                           <option value="PREPARANDO">PREPARANDO</option>
                           <option value="ENVIADO">ENVIADO</option>
                           <option value="ENTREGADO">ENTREGADO</option>
                           <option value="CANCELADO">CANCELADO</option>
                         </select>
-                        <button 
-                          onClick={() => handleRegistrarPago(p.id)}
-                          className="text-xs bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 transition"
-                        >
-                          Pagar
-                        </button>
+                        {p.estado !== "PAGADO" && (
+                          <button 
+                            onClick={() => handleRegistrarPago(p.id)}
+                            className="text-xs bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 transition"
+                          >
+                            Pagar
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -140,6 +163,37 @@ export default function PedidoPage() {
             </div>
           )}
         </ComponentCard>
+
+        {/* Footer de Paginación con Selector de Cantidad */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-4 bg-white p-4 rounded-2xl border border-gray-100">
+          <div className="flex items-center gap-3 text-sm text-gray-600">
+            <span>Mostrar</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1); 
+              }}
+              className="border border-gray-200 rounded-lg px-3 py-1.5 outline-none focus:border-brand-500 bg-gray-50 font-medium"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            <span>registros por página</span>
+          </div>
+
+          <Pagination 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => {
+              setCurrentPage(page);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
+        </div>
       </div>
 
       {/* Modal de Detalle */}

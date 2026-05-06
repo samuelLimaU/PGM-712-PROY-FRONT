@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router";
 
 import {
   ChevronDownIcon,
-  HorizontaLDots,
+  HorizontalDotsIcon,
   UserCircleIcon,
   BoxCubeIcon,
   ListIcon,
@@ -33,6 +33,7 @@ const navItems: NavItem[] = [
       { name: "Productos", path: "/productos", pro: false },
       { name: "Promociones", path: "/promociones", pro: false },
       { name: "Pedidos", path: "/pedidos", pro: false },
+      { name: "Estimación Pedidos", path: "/estimacion", pro: false },
     ],
   },
 ];
@@ -119,7 +120,7 @@ const AppSidebar: React.FC = () => {
             {isExpanded || isHovered || isMobileOpen ? (
               "Menu"
             ) : (
-              <HorizontaLDots className="size-6" />
+              <HorizontalDotsIcon className="size-6" />
             )}
           </h2>
 

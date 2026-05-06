@@ -1,14 +1,14 @@
-const getAuthHeaders = (): HeadersInit => {
+const getAuthHeaders = (includeContentType = true): HeadersInit => {
   const stored = localStorage.getItem("auth");
   const token = stored ? JSON.parse(stored).token : null;
   return {
-    "Content-Type": "application/json",
+    ...(includeContentType ? { "Content-Type": "application/json" } : {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 };
 
 export const http = {
-  get: (url: string) => fetch(url, { headers: getAuthHeaders() }),
+  get: (url: string) => fetch(url, { headers: getAuthHeaders(false) }),
 
   post: (url: string, body: unknown) =>
     fetch(url, {
@@ -27,7 +27,7 @@ export const http = {
   delete: (url: string) =>
     fetch(url, {
       method: "DELETE",
-      headers: getAuthHeaders(),
+      headers: getAuthHeaders(false), // No enviar Content-Type en DELETE
     }),
 
   postForm: (url: string, body: FormData) => {

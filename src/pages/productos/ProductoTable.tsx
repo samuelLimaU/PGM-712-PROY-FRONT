@@ -47,8 +47,8 @@ console.log("datos productos:", data);
 
               <td className="px-4 py-2 font-medium">{p.nombre}</td>
               <td className="px-4 py-2 text-gray-500 max-w-xs truncate">{p.descripcion ?? "—"}</td>
-              <td className="px-4 py-2">${Number(p.precio).toFixed(2)}</td>
-              <td className="px-4 py-2">{p.stock}</td>
+              <td className="px-4 py-2">Bs. {Number(p.precio).toFixed(2)}</td>
+              <td className="px-4 py-2">{p.stock} unidades</td>
               <td className="px-4 py-2">
                 <span className={`px-2 py-1 text-xs rounded ${p.activo ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}>
                   {p.activo ? "Sí" : "No"}

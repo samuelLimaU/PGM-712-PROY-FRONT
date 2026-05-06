@@ -4,6 +4,7 @@ import ComponentCard from "../../components/common/ComponentCard";
 import ProductoTable from "./ProductoTable";
 import ProductoForm from "./ProductoForm";
 import { Producto } from "../../types/Producto";
+import Pagination from "../../components/ui/Pagination";
 import {
   getProductos,
   createProducto,
@@ -20,11 +21,16 @@ export default function ProductoPage() {
   const [openModal, setOpenModal] = useState(false);
   const { playClick } = useSound();
 
+  // Estados de Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+
   const load = async () => {
     try {
       setLoading(true);
       const productos = await getProductos();
       setData(productos);
+      setCurrentPage(1);
     } catch (error: any) {
       showError("Error al cargar productos", error.message);
     } finally {
@@ -35,6 +41,12 @@ export default function ProductoPage() {
   useEffect(() => {
     load();
   }, []);
+
+  // Lógica de Paginación
+  const totalPages = Math.ceil(data.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentData = data.slice(indexOfFirstItem, indexOfLastItem);
 
   const handleSave = async (formData: FormData) => {
     try {
@@ -90,7 +102,7 @@ export default function ProductoPage() {
             <p>Cargando...</p>
           ) : (
             <ProductoTable
-              data={data}
+              data={currentData}
               onEdit={(item) => {
                 setEditing(item);
                 setOpenModal(true);
@@ -99,6 +111,37 @@ export default function ProductoPage() {
             />
           )}
         </ComponentCard>
+
+        {/* Footer de Paginación */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-4 bg-white p-4 rounded-2xl border border-gray-100">
+          <div className="flex items-center gap-3 text-sm text-gray-600">
+            <span>Mostrar</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="border border-gray-200 rounded-lg px-3 py-1.5 outline-none focus:border-brand-500 bg-gray-50 font-medium"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            <span>registros por página</span>
+          </div>
+
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => {
+              setCurrentPage(page);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          />
+        </div>
       </div>
 
       <ProductoForm

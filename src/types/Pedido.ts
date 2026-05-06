@@ -1,4 +1,4 @@
-export type EstadoPedido = "PENDIENTE" | "PREPARANDO" | "ENVIADO" | "ENTREGADO" | "CANCELADO";
+export type EstadoPedido = "PENDIENTE" | "PAGADO" | "PREPARANDO" | "ENVIADO" | "ENTREGADO" | "CANCELADO";
 export type MetodoPago = "EFECTIVO" | "QR" | "TRANSFERENCIA";
 export type EstadoPago = "PENDIENTE" | "COMPLETADO" | "FALLIDO";
 

@@ -5,7 +5,8 @@ import Label from "../../components/form/Label";
 import Input from "../../components/form/input/InputField";
 import Checkbox from "../../components/form/input/Checkbox";
 import Button from "../../components/ui/button/Button";
-import GridShape from "../../components/common/GridShape";
+import VaporBackground from "../../components/common/VaporBackground";
+import SalteñaParticles from "../../components/common/SalteñaParticles";
 import { loginService } from "../../services/authService";
 import { registerService } from "../../services/authService";
 import { useAuth } from "../../context/AuthContext";
@@ -256,7 +257,8 @@ export default function AuthPage({ initialMode = "signin" }: AuthPageProps) {
 
       {/* Panel verde */}
       <div className={greenClasses} style={{ background: "#1B5A26" }}>
-        <GridShape />
+        <VaporBackground />
+        <SalteñaParticles />
         <div className="relative z-10 flex flex-col items-center gap-5 px-8 text-center">
           <div className="flex items-center justify-center w-16 h-16 rounded-full bg-white/10">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none">

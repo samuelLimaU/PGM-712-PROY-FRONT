@@ -1,5 +1,6 @@
 import { Producto } from "../../../types/Producto";
 import { useCarrito } from "../context/CarritoContext";
+import { PlusIcon, CheckCircleIcon } from "../../../icons";
 
 const BASE = "http://localhost:8080";
 
@@ -84,13 +85,23 @@ export default function ProductoCard({ producto }: Props) {
           {!sinStock && (
             <button
               onClick={() => agregar(producto)}
-              className={`text-sm px-3 py-1.5 rounded-xl font-medium transition ${
+              className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-xl font-medium transition ${
                 enCarrito
                   ? "bg-[#E1F5EE] text-[#0F6E56] hover:bg-[#9FE1CB]"
                   : "bg-[#1a1a2e] text-white hover:bg-[#2d2d4e]"
               }`}
             >
-              {enCarrito ? `Agregado (${enCarrito.cantidad})` : "Añadir"}
+              {enCarrito ? (
+                <>
+                  <CheckCircleIcon className="w-4 h-4" />
+                  <span>({enCarrito.cantidad})</span>
+                </>
+              ) : (
+                <>
+                  <PlusIcon className="w-4 h-4" />
+                  <span>Añadir</span>
+                </>
+              )}
             </button>
           )}
         </div>
