@@ -24,13 +24,20 @@ export default function ProductoPage() {
   // Estados de Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [totalPages, setTotalPages] = useState(0);
 
   const load = async () => {
     try {
       setLoading(true);
-      const productos = await getProductos();
-      setData(productos);
-      setCurrentPage(1);
+      const response = await getProductos(currentPage - 1, itemsPerPage);
+      
+      if (response.content) {
+        setData(response.content);
+        setTotalPages(response.totalPages);
+      } else {
+        setData(response);
+        setTotalPages(Math.ceil(response.length / itemsPerPage));
+      }
     } catch (error: any) {
       showError("Error al cargar productos", error.message);
     } finally {
@@ -40,13 +47,7 @@ export default function ProductoPage() {
 
   useEffect(() => {
     load();
-  }, []);
-
-  // Lógica de Paginación
-  const totalPages = Math.ceil(data.length / itemsPerPage);
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentData = data.slice(indexOfFirstItem, indexOfLastItem);
+  }, [currentPage, itemsPerPage]);
 
   const handleSave = async (formData: FormData) => {
     try {
@@ -102,7 +103,7 @@ export default function ProductoPage() {
             <p>Cargando...</p>
           ) : (
             <ProductoTable
-              data={currentData}
+              data={data}
               onEdit={(item) => {
                 setEditing(item);
                 setOpenModal(true);

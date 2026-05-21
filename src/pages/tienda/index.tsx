@@ -27,13 +27,18 @@ export default function CatalogoPage() {
   // Estados de Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(12);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        // Spring Data usa 0-indexed
+        const url = `${BASE}/catalogo?page=${currentPage - 1}&size=${itemsPerPage}`;
+        
         const [resProds, resPromos] = await Promise.allSettled([
-          fetch(`${BASE}/catalogo`).then((r) => {
+          fetch(url).then((r) => {
             if (!r.ok) throw new Error("Error en catálogo");
             return r.json();
           }),
@@ -41,7 +46,16 @@ export default function CatalogoPage() {
         ]);
 
         if (resProds.status === "fulfilled") {
-          setProductos(resProds.value.filter((p: Producto) => p.activo));
+          const response = resProds.value;
+          if (response.content) {
+            setProductos(response.content);
+            setTotalPages(response.totalPages);
+            setTotalElements(response.totalElements);
+          } else {
+            setProductos(response.filter((p: Producto) => p.activo));
+            setTotalPages(Math.ceil(response.length / itemsPerPage));
+            setTotalElements(response.length);
+          }
         } else {
           console.error("Error cargando productos:", resProds.reason);
         }
@@ -56,13 +70,7 @@ export default function CatalogoPage() {
       }
     };
     fetchData();
-  }, []);
-
-  // Lógica de Paginación
-  const totalPages = Math.ceil(productos.length / itemsPerPage);
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentProductos = productos.slice(indexOfFirstItem, indexOfLastItem);
+  }, [currentPage, itemsPerPage]);
 
   const promocionesValidas = promociones.filter((p) => p.activo);
 
@@ -160,7 +168,7 @@ export default function CatalogoPage() {
         <div className="flex items-baseline justify-between mb-6">
           <h2 className="text-xl font-medium text-gray-800">Todos los productos</h2>
           {!loading && (
-            <span className="text-sm text-gray-400">{productos.length} disponibles</span>
+            <span className="text-sm text-gray-400">{totalElements} disponibles</span>
           )}
         </div>
 
@@ -173,7 +181,7 @@ export default function CatalogoPage() {
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-              {currentProductos.map((p) => (
+              {productos.map((p) => (
                 <ProductoCard key={p.id} producto={p} />
               ))}
             </div>

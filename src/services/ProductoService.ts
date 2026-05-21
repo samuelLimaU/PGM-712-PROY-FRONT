@@ -4,8 +4,11 @@ import { http } from "./httpClient";
 const BASE = "http://localhost:8080/productos";
 
 
-export const getProductos = async () => {
-  const res = await http.get(BASE);
+export const getProductos = async (page?: number, size?: number) => {
+  const url = (page !== undefined && size !== undefined) 
+      ? `${BASE}?page=${page}&size=${size}`
+      : BASE;
+  const res = await http.get(url);
   if (!res.ok) throw new Error("Error al obtener productos");
   return await res.json();
 };

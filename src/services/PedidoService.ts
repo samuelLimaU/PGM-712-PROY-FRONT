@@ -20,8 +20,11 @@ export const crearPedido = async (request: PedidoRequestDTO): Promise<number> =>
   return await res.json();
 };
 
-export const getPedidos = async (): Promise<any[]> => {
-    const res = await http.get(API_URL);
+export const getPedidos = async (page?: number, size?: number): Promise<any> => {
+    const url = (page !== undefined && size !== undefined) 
+        ? `${API_URL}?page=${page}&size=${size}`
+        : API_URL;
+    const res = await http.get(url);
     if (!res.ok) throw new Error("Error obteniendo pedidos");
     return await res.json();
 };

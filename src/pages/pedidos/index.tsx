@@ -18,15 +18,24 @@ export default function PedidoPage() {
   // Estados de Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [totalPages, setTotalPages] = useState(0);
 
   const load = async () => {
     try {
       setLoading(true);
-      const data = await getPedidos();
-      // Ordenar por ID descendente para ver los últimos primero
-      const sortedData = [...data].sort((a, b) => b.id - a.id);
-      setPedidos(sortedData);
-      setCurrentPage(1); // Reiniciar a la primera página al cargar
+      // Spring Data usa 0 para la primera página
+      const response = await getPedidos(currentPage - 1, itemsPerPage);
+      
+      // Si el backend devolvió un objeto de paginación
+      if (response.content) {
+        setPedidos(response.content);
+        setTotalPages(response.totalPages);
+      } else {
+        // Fallback por si acaso devuelve la lista completa (compatibilidad)
+        const sortedData = [...response].sort((a, b) => b.id - a.id);
+        setPedidos(sortedData);
+        setTotalPages(Math.ceil(sortedData.length / itemsPerPage));
+      }
     } catch (error: any) {
       showError("Error al cargar pedidos", error.message);
     } finally {
@@ -36,13 +45,7 @@ export default function PedidoPage() {
 
   useEffect(() => {
     load();
-  }, []);
-
-  // Lógica de Paginación
-  const totalPages = Math.ceil(pedidos.length / itemsPerPage);
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentPedidos = pedidos.slice(indexOfFirstItem, indexOfLastItem);
+  }, [currentPage, itemsPerPage]);
 
   const handleEstadoChange = async (id: number, nuevoEstado: EstadoPedido) => {
     try {
@@ -111,7 +114,7 @@ export default function PedidoPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {currentPedidos.map((p) => (
+                  {pedidos.map((p) => (
                     <tr key={p.id} className="hover:bg-gray-50/50 transition">
                       <td className="px-4 py-4 text-sm text-gray-800">
                         <div className="font-medium">{p.clienteNombre}</div>
